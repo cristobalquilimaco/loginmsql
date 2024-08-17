@@ -4,6 +4,8 @@ conexion = mysql.connector.connect(
     user = "root",
     password = "1234",
     host = "localhost",
-    database = "usersdb"
+    database = "users_db",
+    port = "3306"
 )
 
+print("Conection is succesfully")
