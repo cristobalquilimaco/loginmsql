@@ -1,10 +1,11 @@
 from fastapi import FastAPI
-from routers import users_db
+from routers import users_db, login
 
 app = FastAPI()
 
 #ROUTERS
 app.include_router(users_db.router)
+app.include_router(login.router)
 
 
 

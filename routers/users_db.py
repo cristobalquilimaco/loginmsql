@@ -20,7 +20,7 @@ async def create_user(user: User):
         raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail="El usuario ya existe")
 
     user_dict = dict(user)
-    user_dict.pop("id", None)  # Elimina la clave 'id' si existe
+    user_dict.pop("id", None)  
 
     columns = ', '.join(user_dict.keys())
     values = ', '.join(['%s'] * len(user_dict))
@@ -30,7 +30,7 @@ async def create_user(user: User):
     new_id = cursor.lastrowid
     cursor.close()
 
-    # Busca el nuevo usuario y devuelve los datos
+    
     cursor = conexion.cursor(dictionary=True)
     cursor.execute("SELECT * FROM users WHERE id = %s", (new_id,))
     new_user = cursor.fetchone()
@@ -46,7 +46,7 @@ async def users():
 
     # Verifica si hay datos inesperados
     for user in users:
-        if not all(key in user for key in ["id", "name", "email"]):
+        if not all(key in user for key in ["id", "username", "email"]):
             print(f"Datos incompletos: {user}")
 
     return users_schemas(users)
