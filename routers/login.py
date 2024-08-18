@@ -56,7 +56,7 @@ async def auth_user(user: User):
     token = jwt.encode(access_token, SECRET, algorithm=ALGORITHM)
     return {"access_token": token, "token_type": "bearer"}
 
-@router.post("/login")
+@router.post("/")
 async def login(user: User):
     return await auth_user(user)
 
