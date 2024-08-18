@@ -2,9 +2,9 @@
 
 from fastapi import APIRouter, HTTPException, status
 from typing import List
-from env.db.models.user import User
-from env.db.schemas.user import user_schemas, users_schemas
-from env.db.Conexion import conexion
+from db.models.user import User
+from db.schemas.user import user_schemas, users_schemas
+from db.Conexion import conexion
 
 router = APIRouter(prefix="/userdb",
                    tags=["userdb"],
