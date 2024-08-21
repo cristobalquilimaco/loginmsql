@@ -24,7 +24,7 @@ class User(BaseModel):
     email: str
     password: str
 
-@router.post("/login", status_code=status.HTTP_201_CREATED)
+@router.post("/", status_code=status.HTTP_201_CREATED)
 async def create_user(user: User):
     # Verificar si el usuario ya existe
     # Verificar si el usuario ya existe
@@ -59,9 +59,9 @@ async def auth_user(user: User):
     token = jwt.encode(access_token, SECRET, algorithm=ALGORITHM)
     return {"access_token": token, "token_type": "bearer"}
 
-@router.post("/")
+"""@router.post("/")
 async def login(user: User):
-    return await auth_user(user)
+    return await auth_user(user)"""
 
 @router.get("/user/me")
 async def me(user: User = Depends(auth_user)):
