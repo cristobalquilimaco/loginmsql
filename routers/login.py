@@ -9,7 +9,9 @@ ALGORITHM = "HS256"
 ACCESS_TOKEN_DURATION = 1  # Duration in minutes
 SECRET = "ASJGDJAHSVDajsbjaS1as26552DHFJ6000288ksaBVSJA"
 
-router = APIRouter()
+router = APIRouter(prefix="/login",
+                    tags="login",
+                    responses={status.HTTP_404_NOT_FOUND: {"message": "No encontrado"}})
 
 crypt = CryptContext(schemes=["bcrypt"])
 
