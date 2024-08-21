@@ -25,6 +25,7 @@ class User(BaseModel):
 @router.post("/login", status_code=status.HTTP_201_CREATED)
 async def create_user(user: User):
     # Verificar si el usuario ya existe
+    # Verificar si el usuario ya existe
     if user.username in users_db:
         raise HTTPException(
             status_code=status.HTTP_400_BAD_REQUEST, detail="El usuario ya existe"
