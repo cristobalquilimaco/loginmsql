@@ -4,6 +4,7 @@ from pydantic import BaseModel
 from typing import Optional
 from jose import JWTError, jwt
 from datetime import datetime, timedelta
+from fastapi.security import OAuth2PasswordBearer
 
 ALGORITHM = "HS256"
 ACCESS_TOKEN_DURATION = 1  # Duration in minutes
@@ -13,16 +14,20 @@ router = APIRouter(prefix="/login",
                    tags=["login"],
                    responses={status.HTTP_404_NOT_FOUND: {"message": "No encontrado"}})
 
+oauth2 = OAuth2PasswordBearer(tokenUrl="login")
+
 crypt = CryptContext(schemes=["bcrypt"])
 
-# Base de datos simulada
-users_db = {}
 
 class User(BaseModel):
     id: Optional[str] = None
     username: str
     email: str
     password: str
+
+class users_db(User):
+    password:str
+
 
 @router.post("/", status_code=status.HTTP_201_CREATED)
 async def create_user(user: User):
