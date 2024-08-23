@@ -1,10 +1,10 @@
 from fastapi import APIRouter, Depends, HTTPException, status, Form
 from passlib.context import CryptContext
 from pydantic import BaseModel
-from typing import Dict, Optional
 from jose import JWTError, jwt
 from datetime import datetime, timedelta
 from fastapi.security import OAuth2PasswordBearer
+from db.Conexion import conexion  # Importa la conexión desde tu archivo
 
 ALGORITHM = "HS256"
 ACCESS_TOKEN_DURATION = 1  # Duration in minutes
@@ -16,8 +16,6 @@ oauth2_scheme = OAuth2PasswordBearer(tokenUrl="login")
 
 crypt = CryptContext(schemes=["bcrypt"])
 
-users_db: Dict[str, Dict[str, str]] = {}
-
 class User(BaseModel):
     username: str
     email: str
@@ -27,29 +25,44 @@ class User(BaseModel):
 class UserDB(User):
     password: str
 
-"""@router.post("/", status_code=status.HTTP_201_CREATED)
+@router.post("/", status_code=status.HTTP_201_CREATED)
 async def create_user(
     username: str = Form(...),
     email: str = Form(...),
     password: str = Form(...),
 ):
+    cursor = conexion.cursor(dictionary=True)
+
     # Verificar si el usuario ya existe
-    if username in users_db:
+    cursor.execute("SELECT * FROM users WHERE username = %s", (username,))
+    user = cursor.fetchone()
+    if user:
         raise HTTPException(
             status_code=status.HTTP_400_BAD_REQUEST, detail="El usuario ya existe"
         )
+
     # Hashear la contraseña
     hashed_password = crypt.hash(password)
 
-    users_db[username] = {
-        "username": username,
-        "email": email,
-        "hashed_password": hashed_password,
-    }
+    # Insertar el nuevo usuario en la base de datos
+    cursor.execute(
+        "INSERT INTO users (username, email, disabled, password) VALUES (%s, %s, %s, %s)",
+        (username, email, False, hashed_password)
+    )
+    conexion.commit()
+
+    cursor.close()
+
     return {"username": username, "email": email}
 
 def search_user_db(username: str):
-    return users_db.get(username)
+    cursor = conexion.cursor(dictionary=True)
+    cursor.execute("SELECT username, email, password, disabled FROM users WHERE username = %s", (username,))
+    user = cursor.fetchone()
+
+    cursor.close()
+
+    return user
 
 async def auth_user(username: str, password: str):
     user_data = search_user_db(username)
@@ -57,7 +70,7 @@ async def auth_user(username: str, password: str):
         raise HTTPException(
             status_code=status.HTTP_400_BAD_REQUEST, detail="El usuario no existe"
         )
-    if not crypt.verify(password, user_data['hashed_password']):
+    if not crypt.verify(password, user_data['password']):
         raise HTTPException(
             status_code=status.HTTP_400_BAD_REQUEST, detail="Usuario o contraseña inválida"
         )
@@ -65,7 +78,7 @@ async def auth_user(username: str, password: str):
     token = jwt.encode(access_token, SECRET, algorithm=ALGORITHM)
     return {"access_token": token, "token_type": "bearer"}
 
-@router.post("/")
+@router.post("/login")
 async def login(username: str = Form(...), password: str = Form(...)):
     return await auth_user(username, password)
 
@@ -93,4 +106,3 @@ async def me(token: str = Depends(oauth2_scheme)):
             detail="User not found"
         )
     return {"username": user["username"], "email": user["email"]}
-"""
