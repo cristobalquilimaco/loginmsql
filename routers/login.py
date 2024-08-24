@@ -4,7 +4,7 @@ from pydantic import BaseModel
 from jose import JWTError, jwt
 from datetime import datetime, timedelta
 from fastapi.security import OAuth2PasswordBearer
-from db.Conexion import conexion  # Importa la conexión desde tu archivo
+from db.Conexion import conexion  # Asegúrate de que esta importación sea correcta
 
 ALGORITHM = "HS256"
 ACCESS_TOKEN_DURATION = 1  # Duration in minutes
@@ -37,6 +37,7 @@ async def create_user(
     cursor.execute("SELECT * FROM users WHERE username = %s", (username,))
     user = cursor.fetchone()
     if user:
+        cursor.close()
         raise HTTPException(
             status_code=status.HTTP_400_BAD_REQUEST, detail="El usuario ya existe"
         )
@@ -50,7 +51,6 @@ async def create_user(
         (username, email, False, hashed_password)
     )
     conexion.commit()
-
     cursor.close()
 
     return {"username": username, "email": email}
@@ -59,9 +59,7 @@ def search_user_db(username: str):
     cursor = conexion.cursor(dictionary=True)
     cursor.execute("SELECT username, email, password, disabled FROM users WHERE username = %s", (username,))
     user = cursor.fetchone()
-
     cursor.close()
-
     return user
 
 async def auth_user(username: str, password: str):
@@ -70,9 +68,16 @@ async def auth_user(username: str, password: str):
         raise HTTPException(
             status_code=status.HTTP_400_BAD_REQUEST, detail="El usuario no existe"
         )
-    if not crypt.verify(password, user_data['password']):
+    try:
+        if not crypt.verify(password, user_data['password']):
+            raise HTTPException(
+                status_code=status.HTTP_400_BAD_REQUEST, detail="Usuario o contraseña inválida"
+            )
+    except Exception as e:
         raise HTTPException(
-            status_code=status.HTTP_400_BAD_REQUEST, detail="Usuario o contraseña inválida"
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            detail="Error al verificar la contraseña",
+            headers={"WWW-Authenticate": "Bearer"},
         )
     access_token = {"sub": username, "exp": datetime.utcnow() + timedelta(minutes=ACCESS_TOKEN_DURATION)}
     token = jwt.encode(access_token, SECRET, algorithm=ALGORITHM)
