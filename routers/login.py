@@ -4,11 +4,11 @@ from pydantic import BaseModel
 from jose import JWTError, jwt
 from datetime import datetime, timedelta
 from fastapi.security import OAuth2PasswordBearer
-from db.Conexion import conexion  # Asegúrate de que `conexion` esté correctamente importado
+from db.Conexion import conexion  
 
-# Configuraciones
+
 ALGORITHM = "HS256"
-ACCESS_TOKEN_DURATION = 1  # Duración del token en minutos
+ACCESS_TOKEN_DURATION = 1  
 SECRET = "ASJGDJAHSVDajsbjaS1as26552DHFJ6000288ksaBVSJA"
 
 # Inicialización
@@ -16,17 +16,25 @@ router = APIRouter()
 oauth2_scheme = OAuth2PasswordBearer(tokenUrl="login")
 crypt = CryptContext(schemes=["bcrypt"], deprecated="auto")
 
+password = "mi_contraseña_segura"
+hashed_password = crypt.hash(password)
+print("Hash generado:", hashed_password)
+
+# Verificación del hash
+is_correct = crypt.verify(password, hashed_password)
+print("¿Contraseña correcta?", is_correct)
+
 # Modelos
 class User(BaseModel):
     username: str
     email: str
     password: str
-    disabled: bool = False  # Valor por defecto para `disabled`
+    disabled: bool = False 
 
 class UserDB(User):
     password: str
 
-# Crear un nuevo usuario
+
 @router.post("/", status_code=status.HTTP_201_CREATED)
 async def create_user(
     username: str = Form(...),
@@ -57,7 +65,7 @@ async def create_user(
 
     return {"username": username, "email": email}
 
-# Buscar un usuario por nombre de usuario
+
 def search_user_db(username: str):
     cursor = conexion.cursor(dictionary=True)
     cursor.execute("SELECT username, email, password, disabled FROM users WHERE username = %s", (username,))
@@ -65,7 +73,6 @@ def search_user_db(username: str):
     cursor.close()
     return user
 
-# Autenticación del usuario y generación de token
 async def auth_user(username: str, password: str):
     user_data = search_user_db(username)
     if not user_data:
@@ -73,11 +80,13 @@ async def auth_user(username: str, password: str):
             status_code=status.HTTP_400_BAD_REQUEST, detail="El usuario no existe"
         )
     
+    # Verificar la contraseña
     if not crypt.verify(password, user_data['password']):
         raise HTTPException(
             status_code=status.HTTP_400_BAD_REQUEST, detail="Usuario o contraseña inválida"
         )
     
+    # Generar token
     access_token = {"sub": username, "exp": datetime.utcnow() + timedelta(minutes=ACCESS_TOKEN_DURATION)}
     token = jwt.encode(access_token, SECRET, algorithm=ALGORITHM)
     return {"access_token": token, "token_type": "bearer"}
