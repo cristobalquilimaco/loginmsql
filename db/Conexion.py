@@ -9,3 +9,5 @@ conexion = mysql.connector.connect(
 )
 
 print("Conection is succesfully")
+
+cursor =  conexion.cursor(dictionary=True)

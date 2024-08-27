@@ -1,9 +1,9 @@
 def user_schemas(user) -> dict:
     return {
-        "id": str(user.get("id", "")),  
-        "username": user.get("username", ""),   
-        "email": user.get("email", ""),
-        "password": user.get("password", "")
+        "id": user["id"],
+        "username": user["username"],
+        "email": user["email"],
+        "password": user["password"]
     }
 
 def users_schemas(users) -> list:
