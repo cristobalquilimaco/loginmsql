@@ -69,3 +69,5 @@ async def delete_user(id: int):
         raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Usuario no encontrado")
 
     return None
+
+

@@ -21,7 +21,7 @@ class LoginRequest(BaseModel):
     username: str
     password: str
 
-@router.post("/login")
+@router.post("/")
 async def login(login_request: LoginRequest):
     user_data = search_user_db(login_request.username)
     if not user_data:
