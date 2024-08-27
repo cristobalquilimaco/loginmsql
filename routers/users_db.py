@@ -21,3 +21,14 @@ async def create_user(user: User):
     cursor.execute("SELECT * FROM users WHERE email = %s", (user.email))
     if cursor.fetchone():
         raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail="El usuario ya existe")
+    
+    user_dict = user.dict()
+    cursor.execute("INSERT INTO users (username, email, password) VALUES (%s, %s, %s)", 
+                (user.username, user.email, user.password))
+    conexion.commit()
+
+    user_id = cursor.lastrowid
+    cursor.execute("SELECT * FROM users WHERE id = %s", (user_id))
+    new_user = cursor.fetchone()
+
+    return user_schemas(new_user)
