@@ -12,4 +12,12 @@ router = APIRouter(prefix="/userdb",
 
 @router.get("/", response_model=list[User])
 async def users():
-    cursor.excute
+    cursor.excute("SELECT * FROM users")
+    result = cursor.fetchall()
+    return user_schemas(result)
+
+@router.post("/", response_model=User, status_code=status.HTTP_201_CREATED)
+async def create_user(user: User):
+    cursor.execute("SELECT * FROM users WHERE email = %s", (user.email))
+    if cursor.fetchone():
+        raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail="El usuario ya existe")
