@@ -1,10 +1,10 @@
-from fastapi import APIRouter, HTTPException, status, Depends
+from fastapi import APIRouter, HTTPException, status
+from pydantic import BaseModel
 from passlib.context import CryptContext
 from jose import JWTError, jwt
 from datetime import datetime, timedelta
-from fastapi.security import OAuth2PasswordBearer
-from pydantic import BaseModel
 from typing import Optional
+from db.Conexion import conexion, cursor
 
 # Configuración del JWT
 ALGORITHM = "HS256"
@@ -13,7 +13,6 @@ SECRET = "ASJGDJAHSVDajsbjaS1as26552DHFJ6000288ksaBVSJA"
 
 # Inicialización
 router = APIRouter()
-oauth2_scheme = OAuth2PasswordBearer(tokenUrl="login")
 crypt = CryptContext(schemes=["bcrypt"], deprecated="auto")
 
 # Modelos de Solicitud
@@ -21,7 +20,7 @@ class LoginRequest(BaseModel):
     username: str
     password: str
 
-@router.post("/")
+@router.post("/login")
 async def login(login_request: LoginRequest):
     user_data = search_user_db(login_request.username)
     if not user_data:
@@ -42,17 +41,6 @@ async def login(login_request: LoginRequest):
     return {"access_token": token, "token_type": "bearer"}
 
 def search_user_db(username: str):
-    import mysql.connector
-    connection = mysql.connector.connect(
-        user="root",
-        password="1234",
-        host="localhost",
-        database="users_db",
-        port=3306
-    )
-    cursor = connection.cursor(dictionary=True)
     cursor.execute("SELECT username, email, password, disabled FROM users WHERE username = %s", (username,))
     user = cursor.fetchone()
-    cursor.close()
-    connection.close()
     return user
