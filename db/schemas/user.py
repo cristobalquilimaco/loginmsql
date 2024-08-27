@@ -1,10 +1,10 @@
-def user_schemas(user) -> dict:
+def user_schema(user) -> dict:
     return {
-        "id": user["id"],
+        "id": user["id"], 
         "username": user["username"],
         "email": user["email"],
-        "password": user["password"]
+        "password": user["password"]  
     }
 
-def users_schemas(users) -> list:
-    return [user_schemas(user) for user in users]
+def users_schema(users) -> list:
+    return [user_schema(user) for user in users]
