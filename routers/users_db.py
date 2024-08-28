@@ -1,22 +1,25 @@
-# routers/users_db.py
-
 from fastapi import APIRouter, HTTPException, status
 from typing import List
 from db.models.user import User
 from db.schemas.user import user_schema, users_schema
 from db.Conexion import conexion, cursor
+from passlib.context import CryptContext
 
-router = APIRouter(prefix="/userdb",
-                   tags=["userdb"],
-                   responses={status.HTTP_404_NOT_FOUND: {"message": "No encontrado"}})
+router = APIRouter(
+    prefix="/userdb",
+    tags=["userdb"],
+    responses={status.HTTP_404_NOT_FOUND: {"message": "No encontrado"}}
+)
 
-@router.get("/", response_model=list[User])
+crypt = CryptContext(schemes=["bcrypt"], deprecated="auto")
+
+@router.get("/", response_model=List[User])
 async def users():
     cursor.execute("SELECT * FROM users")
     result = cursor.fetchall()
     return users_schema(result)
 
-@router.get("/{id}", response_model=User)  # Path
+@router.get("/{id}", response_model=User)
 async def user(id: int):
     cursor.execute("SELECT * FROM users WHERE id = %s", (id,))
     result = cursor.fetchone()
@@ -31,9 +34,13 @@ async def create_user(user: User):
     if cursor.fetchone():
         raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail="El usuario ya existe")
 
-    user_dict = user.dict()
-    cursor.execute("INSERT INTO users (username, email, password) VALUES (%s, %s, %s)",
-                (user.username, user.email, user.password))
+    # Hashear la contraseña antes de almacenarla
+    hashed_password = crypt.hash(user.password)
+    
+    cursor.execute(
+        "INSERT INTO users (username, email, password) VALUES (%s, %s, %s)",
+        (user.username, user.email, hashed_password)
+    )
     conexion.commit()  
 
     user_id = cursor.lastrowid  
@@ -51,9 +58,11 @@ async def update_user(user: User):
     if not cursor.fetchone():
         raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Usuario no encontrado")
 
-    cursor.execute("UPDATE users SET username = %s, email = %s, password = %s WHERE id = %s",
-                (user.username, user.email, user.password, user_id))
-    conexion.commit()  # Make sure to commit the transaction
+    cursor.execute(
+        "UPDATE users SET username = %s, email = %s, password = %s WHERE id = %s",
+        (user.username, user.email, user.password, user_id)
+    )
+    conexion.commit()  
 
     cursor.execute("SELECT * FROM users WHERE id = %s", (user_id,))
     updated_user = cursor.fetchone()
@@ -63,11 +72,9 @@ async def update_user(user: User):
 @router.delete("/{id}", status_code=status.HTTP_204_NO_CONTENT)
 async def delete_user(id: int):
     cursor.execute("DELETE FROM users WHERE id = %s", (id,))
-    conexion.commit()  # Make sure to commit the transaction
+    conexion.commit()  
 
     if cursor.rowcount == 0:
         raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Usuario no encontrado")
 
     return None
-
-
