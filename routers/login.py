@@ -1,10 +1,10 @@
 from fastapi import APIRouter, HTTPException, status, Depends
+from fastapi.security import OAuth2PasswordBearer, OAuth2PasswordRequestForm
 from pydantic import BaseModel
 from passlib.context import CryptContext
 from jose import JWTError, jwt
 from datetime import datetime, timedelta
 from typing import Optional
-from fastapi.security import OAuth2PasswordBearer, OAuth2PasswordRequestForm
 from db.Conexion import cursor
 
 ALGORITHM = "HS256"
@@ -13,11 +13,12 @@ SECRET = "201d573bd7d1344d3a3bfce1550b69102fd11be3db6d379508b6cccc58ea230b"
 
 router = APIRouter(prefix="/jwtauth", tags=["jwtauth"], responses={status.HTTP_404_NOT_FOUND: {"message": "No encontrado"}})
 
-oauth2 = OAuth2PasswordBearer(tokenUrl="login")
+
 
 crypt = CryptContext(schemes=["bcrypt"], deprecated="auto")
 
-# Modelo sin `full_name`
+oauth2_scheme = OAuth2PasswordBearer(tokenUrl="login")
+
 class User(BaseModel):
     username: str
     email: str
@@ -46,7 +47,7 @@ def search_user(username: str):
         return User(**result)
     return None
 
-async def auth_user(token: str = Depends(oauth2)):
+async def auth_user(token: str = Depends(oauth2_scheme)):
     exception = HTTPException(
         status_code=status.HTTP_401_UNAUTHORIZED,
         detail="Credenciales de autenticación inválidas",
@@ -86,7 +87,3 @@ async def login(form: OAuth2PasswordRequestForm = Depends()):
     }
 
     return {"access_token": jwt.encode(access_token, SECRET, algorithm=ALGORITHM), "token_type": "bearer"}
-
-@router.get("/users/me")
-async def me(user: User = Depends(current_user)):
-    return user
