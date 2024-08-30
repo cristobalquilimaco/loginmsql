@@ -5,7 +5,7 @@ from passlib.context import CryptContext
 from jose import JWTError, jwt
 from datetime import datetime, timedelta
 from typing import Optional
-from db import get_connection
+from db.Conexion import conexion
 
 ALGORITHM = "HS256"
 ACCESS_TOKEN_DURATION = 1
@@ -26,7 +26,7 @@ class UserDB(User):
     password: str
 
 def get_user(username: str):
-    conn = get_connection()
+    conn = conexion()
     cursor = conn.cursor(dictionary=True)
     cursor.execute("SELECT username, email, password, disabled FROM users WHERE username = %s", (username,))
     user = cursor.fetchone()
@@ -37,7 +37,7 @@ def get_user(username: str):
     return None
 
 def add_user(username: str, email: str, password: str):
-    conn = get_connection()
+    conn = conexion()
     cursor = conn.cursor()
     hashed_password = crypt.hash(password)
     cursor.execute(
