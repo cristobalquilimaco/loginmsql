@@ -10,4 +10,5 @@ def conexion():
         port = "3306"
 )
     
-cursor = conexion.cursor(dictionary=True) 
+conn = conexion()
+cursor = conn.cursor(dictionary=True)
