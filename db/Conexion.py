@@ -1,4 +1,5 @@
 import mysql.connector
+from mysql.connector import Error
 
 conexion = mysql.connector.connect(
     user = "root",
@@ -7,7 +8,5 @@ conexion = mysql.connector.connect(
     database = "users_db",
     port = "3306"
 )
-
-print("Conection is succesfully")
-
-cursor = conexion.cursor(dictionary=True)
+    
+cursor = conexion.cursor(dictionary=True) 

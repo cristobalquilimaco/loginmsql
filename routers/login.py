@@ -5,7 +5,7 @@ from passlib.context import CryptContext
 from jose import JWTError, jwt
 from datetime import datetime, timedelta
 from typing import Optional
-from db.Conexion import conexion
+from db.Conexion import conexion, cursor
 
 ALGORITHM = "HS256"
 ACCESS_TOKEN_DURATION = 1
