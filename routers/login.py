@@ -102,6 +102,6 @@ async def register(user: UserCreate):
     add_user(user.username, user.email, user.password)
     return {"message": "Usuario registrado exitosamente"}
 
-@router.get("/users/me")
+@router.get("/users/me", response_model=User)
 async def me(user: User = Depends(current_user)):
     return user

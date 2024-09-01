@@ -10,7 +10,7 @@ class UserDB(User):
     password: str
 
 class UserCreate(BaseModel):
-    id: Optional[str]
+    id: Optional[str] = None
     username: str
     email: str
     password: str
