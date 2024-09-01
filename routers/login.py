@@ -1,11 +1,12 @@
+from argon2 import PasswordHasher
 from fastapi import APIRouter, HTTPException, status, Depends
 from fastapi.security import OAuth2PasswordBearer, OAuth2PasswordRequestForm
 from pydantic import BaseModel
-from passlib.context import CryptContext
 from jose import JWTError, jwt
 from datetime import datetime, timedelta
 from typing import Optional
 from db.Conexion import conexion, cursor
+from db.models.user import User, UserCreate, UserDB
 
 ALGORITHM = "HS256"
 ACCESS_TOKEN_DURATION = 1
@@ -13,17 +14,10 @@ SECRET = "201d573bd7d1344d3a3bfce1550b69102fd11be3db6d379508b6cccc58ea230b"
 
 router = APIRouter(prefix="/jwtauth", tags=["jwtauth"], responses={status.HTTP_404_NOT_FOUND: {"message": "No encontrado"}})
 
-crypt = CryptContext(schemes=["bcrypt"], deprecated="auto")
-
+ph = PasswordHasher()
 oauth2_scheme = OAuth2PasswordBearer(tokenUrl="login")
 
-class User(BaseModel):
-    username: str
-    email: str
-    disabled: bool
 
-class UserDB(User):
-    password: str
 
 def get_user(username: str):
     conn = conexion()
@@ -39,7 +33,7 @@ def get_user(username: str):
 def add_user(username: str, email: str, password: str):
     conn = conexion()
     cursor = conn.cursor()
-    hashed_password = crypt.hash(password)
+    hashed_password = ph.hash(password)
     cursor.execute(
         "INSERT INTO users (username, email, password, disabled) VALUES (%s, %s, %s, %s)",
         (username, email, hashed_password, False)
@@ -47,6 +41,13 @@ def add_user(username: str, email: str, password: str):
     conn.commit()
     cursor.close()
     conn.close()
+
+def verify_password(plain_password: str, hashed_password: str) -> bool:
+    try:
+        ph.verify(hashed_password, plain_password)
+        return True
+    except Exception:
+        return False
 
 async def auth_user(token: str = Depends(oauth2_scheme)):
     exception = HTTPException(
@@ -77,23 +78,28 @@ async def current_user(user: User = Depends(auth_user)):
 @router.post("/login")
 async def login(form: OAuth2PasswordRequestForm = Depends()):
     user = get_user(form.username)
-    if not user or not crypt.verify(form.password, user.password):
+    if not user:
         raise HTTPException(
             status_code=status.HTTP_400_BAD_REQUEST,
-            detail="El usuario o la contraseña no son correctos"
+            detail="El usuario no existe"
+        )
+    if not verify_password(form.password, user.password):
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail="La contraseña es incorrecta"
         )
     access_token = {"sub": user.username,
                     "exp": datetime.utcnow() + timedelta(minutes=ACCESS_TOKEN_DURATION)}
     return {"access_token": jwt.encode(access_token, SECRET, algorithm=ALGORITHM), "token_type": "bearer"}
 
 @router.post("/register")
-async def register(username: str, email: str, password: str):
-    if get_user(username):
+async def register(user: UserCreate):
+    if get_user(user.username):
         raise HTTPException(
             status_code=status.HTTP_400_BAD_REQUEST,
             detail="El usuario ya existe"
         )
-    add_user(username, email, password)
+    add_user(user.username, user.email, user.password)
     return {"message": "Usuario registrado exitosamente"}
 
 @router.get("/users/me")
