@@ -22,7 +22,7 @@ def get_user(username: str):
     conn = conexion()
     cursor = conn.cursor(dictionary=True)
     cursor.execute(
-        "SELECT username, email, phone, password, disabled FROM users WHERE username = %s",
+        "SELECT username, phone, email, password, disabled FROM users WHERE username = %s",
         (username,)
     )
     user = cursor.fetchone()
@@ -40,7 +40,7 @@ def add_user(username: str, email: str, phone: str, password: str):
     phone = phone[:20] 
     
     cursor.execute(
-        "INSERT INTO users (username, email, phone, password, disabled) VALUES (%s, %s, %s, %s, %s)",
+        "INSERT INTO users (username, phone, email, password, disabled) VALUES (%s, %s, %s, %s, %s)",
         (username, email, phone, hashed_password, False)
     )
     conn.commit()

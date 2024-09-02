@@ -3,8 +3,8 @@ from typing import Optional
 
 class User(BaseModel):
     username: str
-    email: str
     phone: str
+    email: str
     disabled: bool
 
 class UserDB(User):
