@@ -21,7 +21,10 @@ oauth2_scheme = OAuth2PasswordBearer(tokenUrl="login")
 def get_user(username: str):
     conn = conexion()
     cursor = conn.cursor(dictionary=True)
-    cursor.execute("SELECT username, email, password, disabled FROM users WHERE username = %s", (username,))
+    cursor.execute(
+        "SELECT username, email, phone, password, disabled FROM users WHERE username = %s",
+        (username,)
+    )
     user = cursor.fetchone()
     cursor.close()
     conn.close()
@@ -29,13 +32,16 @@ def get_user(username: str):
         return UserDB(**user)
     return None
 
-def add_user(username: str, email: str, password: str):
+def add_user(username: str, email: str, phone: str, password: str):
     conn = conexion()
     cursor = conn.cursor()
     hashed_password = ph.hash(password)
+    
+    phone = phone[:20] 
+    
     cursor.execute(
-        "INSERT INTO users (username, email, password, disabled) VALUES (%s, %s, %s, %s)",
-        (username, email, hashed_password, False)
+        "INSERT INTO users (username, email, phone, password, disabled) VALUES (%s, %s, %s, %s, %s)",
+        (username, email, phone, hashed_password, False)
     )
     conn.commit()
     cursor.close()
@@ -98,7 +104,7 @@ async def register(user: UserCreate):
             status_code=status.HTTP_400_BAD_REQUEST,
             detail="El usuario ya existe"
         )
-    add_user(user.username, user.email, user.password)
+    add_user(user.username, user.phone, user.email, user.password)
     return {"message": "Usuario registrado exitosamente"}
 
 @router.get("/users/me", response_model=User)

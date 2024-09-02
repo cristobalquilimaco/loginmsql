@@ -4,6 +4,7 @@ from typing import Optional
 class User(BaseModel):
     username: str
     email: str
+    phone: str
     disabled: bool
 
 class UserDB(User):
@@ -12,5 +13,6 @@ class UserDB(User):
 class UserCreate(BaseModel):
     id: Optional[str] = None
     username: str
+    phone: str
     email: str
     password: str
